@@ -1,6 +1,9 @@
 exoraytracer
 --------------------------------
 
+.. image:: https://travis-ci.com/brackham/exoraytracer.svg?branch=master
+    :target: https://travis-ci.com/brackham/exoraytracer
+    :alt: Travis CI Build Badge
 .. image:: http://img.shields.io/badge/powered%20by-AstroPy-orange.svg?style=flat
     :target: http://www.astropy.org
     :alt: Powered by Astropy Badge
