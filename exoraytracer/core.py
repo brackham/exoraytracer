@@ -72,7 +72,7 @@ class Star:
         self.meridian = (self.meridian + angle) % 360.
         if self.meridian > 180.:
             self.meridian -= 360.
-        for j, i in np.ndindex(star.shape):
+        for j, i in np.ndindex(self.shape):
             self.P[j,i,:] = rotate_basis(self.P[j,i,:], gamma=np.radians(-angle))
         self.r = np.sqrt(np.sum(self.P**2, axis=2))
         self.theta = np.arccos(self.P[:,:,2]/self.r)
