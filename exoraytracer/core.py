@@ -56,14 +56,15 @@ class Star:
         self.I = np.ma.masked_where(np.isnan(self.r), self.I)
         for spot in self.spots:
             dist = haversine(self.lat, self.lon, spot.lat, spot.lon)
-            spotted = np.ma.masked_where(dist<=spot.radius, dist)
+            spotted = np.ma.masked_where(dist <= spot.radius, dist)
             self.I[spotted.mask] = spot.contrast
 
     def limb_darken(self):
         """
         Apply the quadratic limb darkening law
         """
-        self.I = self.I - self.u1*(self.I - self.mu) - self.u2*(self.I - self.mu)**2
+        self.I = self.I - self.u1*(self.I - self.mu) \
+                        - self.u2*(self.I - self.mu)**2
 
     def rotate(self, angle):
         """
@@ -73,10 +74,11 @@ class Star:
         if self.meridian > 180.:
             self.meridian -= 360.
         for j, i in np.ndindex(self.shape):
-            self.P[j,i,:] = rotate_basis(self.P[j,i,:], gamma=np.radians(-angle))
+            self.P[j, i, :] = rotate_basis(self.P[j, i, :],
+                                           gamma=np.radians(-angle))
         self.r = np.sqrt(np.sum(self.P**2, axis=2))
-        self.theta = np.arccos(self.P[:,:,2]/self.r)
-        self.phi = np.arctan2(self.P[:,:,0], self.P[:,:,1])
+        self.theta = np.arccos(self.P[:, :, 2]/self.r)
+        self.phi = np.arctan2(self.P[:, :, 0], self.P[:, :, 1])
         self.lat = np.degrees(self.theta-np.pi/2.)
         self.lon = np.degrees(self.phi)
         self.calc_I()
@@ -94,11 +96,12 @@ class Star:
         Set the inclination to a specified degree value
         """
         angle = new_inclination - self.inc
-        for j, i in np.ndindex(star.shape):
-            self.P[j,i,:] = rotate_basis(self.P[j,i,:], alpha=np.radians(-angle))
+        for j, i in np.ndindex(self.shape):
+            self.P[j, i, :] = rotate_basis(self.P[j, i, :],
+                                           alpha=np.radians(-angle))
         self.r = np.sqrt(np.sum(self.P**2, axis=2))
-        self.theta = np.arccos(self.P[:,:,2]/self.r)
-        self.phi = np.arctan2(self.P[:,:,0], self.P[:,:,1])
+        self.theta = np.arccos(self.P[:, :, 2]/self.r)
+        self.phi = np.arctan2(self.P[:, :, 0], self.P[:, :, 1])
         self.lat = np.degrees(self.theta-np.pi/2.)
         self.lon = np.degrees(self.phi)
         self.calc_I()
