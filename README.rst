@@ -1,11 +1,11 @@
-Ray-tracing exoplanetary systems
+exoraytracer
 --------------------------------
 
 .. image:: http://img.shields.io/badge/powered%20by-AstroPy-orange.svg?style=flat
     :target: http://www.astropy.org
     :alt: Powered by Astropy Badge
 
-
+Ray-tracing exoplanetary systems. For more information, `read the docs <https://exoraytracer.readthedocs.io>`_.
 
 
 License
@@ -21,5 +21,5 @@ more information.
 Contributing
 ------------
 
-We love contributions! exoraytracer is open source,
+We love contributions! ``exoraytracer`` is open source,
 built on open source, and we'd love to have you hang out in our community.
