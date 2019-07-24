@@ -1,6 +1,9 @@
 import numpy as np
 
 
+__all__ = ['Ray', 'Star', 'Spot', 'Scene', 'intersect']
+
+
 class Ray:
     """A ray"""
     def __init__(self, origin, direction):
