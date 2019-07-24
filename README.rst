@@ -3,7 +3,10 @@ exoraytracer
 
 .. image:: https://travis-ci.com/brackham/exoraytracer.svg?branch=master
     :target: https://travis-ci.com/brackham/exoraytracer
-    :alt: Travis CI Build Badge
+    :alt: Travis CI Build Status
+.. image:: https://readthedocs.org/projects/exoraytracer/badge/?version=latest
+    :target: https://exoraytracer.readthedocs.io/en/latest/?badge=latest
+    :alt: Documentation Status
 .. image:: http://img.shields.io/badge/powered%20by-AstroPy-orange.svg?style=flat
     :target: http://www.astropy.org
     :alt: Powered by Astropy Badge
