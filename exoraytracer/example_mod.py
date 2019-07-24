@@ -39,14 +39,9 @@ def primes(imax):
     return result
 
 
-def do_primes(n, usecython=False):
-    if usecython:
-
-        raise Exception("This template does not have the example C code included.")
-
-    else:
-        print('Using pure python primes')
-        return primes(n)
+def do_primes(n):
+    print('Using pure python primes')
+    return primes(n)
 
 
 def main(args=None):
@@ -55,8 +50,6 @@ def main(args=None):
     from time import time
 
     parser = argparse.ArgumentParser(description='Process some integers.')
-    parser.add_argument('-c', '--use-cython', dest='cy', action='store_true',
-                        help='Use the Cython-based Prime number generator.')
     parser.add_argument('-t', '--timing', dest='time', action='store_true',
                         help='Time the Fibonacci generator.')
     parser.add_argument('-p', '--print', dest='prnt', action='store_true',
