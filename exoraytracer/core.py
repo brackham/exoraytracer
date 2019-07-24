@@ -120,3 +120,149 @@ class Scene:
     def __init__(self, objects, res=100):
         self.objects = objects
         self.res = res
+
+
+def normalize(x):
+    x /= np.linalg.norm(x)
+    return x
+
+
+def intersect(Ray, Star):
+    """
+    Intersection of a ray and a sphere
+
+    See: https://en.wikipedia.org/wiki/Line-sphere_intersection
+    """
+    a = np.dot(Ray.u, Ray.u)
+    origin_center = Ray.origin - Star.center
+    b = 2*np.dot(Ray.u, origin_center)
+    c = np.dot(origin_center, origin_center) - Star.radius**2
+    discriminant = b**2 - 4*a*c
+    if discriminant >= 0:
+        t1 = (-b + np.sqrt(discriminant))/2.
+        t2 = (-b - np.sqrt(discriminant))/2.
+        t1, t2 = np.min([t1, t2]), np.max([t1, t2])
+        if t1 >= 0:
+            return t1
+        else:
+            return t2
+    return np.inf
+
+
+def angle_between(v0, v1):
+    """
+    Determine the angle between two vectors
+    """
+    v0 = normalize(v0)
+    v1 = normalize(v1)
+    theta = np.arccos(np.dot(v0, v1))
+    return theta
+
+
+def get_Euler_angles(u, theta):
+    """
+    Get the Euler angles for a specified rotation about an axis.
+    Adapted from `starry` jupyter notebook.
+    """
+    ux, uy, uz = u[0], u[1], u[2]
+    # Numerical tolerance
+    tol = 1e-16
+    if theta == 0:
+        theta = tol
+    if ux == 0 and uy == 0:
+        ux = tol
+        uy = tol
+
+    # Elements of the transformation matrix
+    costheta = np.cos(theta)
+    sintheta = np.sin(theta)
+    RA01 = ux * uy * (1 - costheta) - uz * sintheta
+    RA02 = ux * uz * (1 - costheta) + uy * sintheta
+    RA11 = costheta + uy * uy * (1 - costheta)
+    RA12 = uy * uz * (1 - costheta) - ux * sintheta
+    RA20 = uz * ux * (1 - costheta) - uy * sintheta
+    RA21 = uz * uy * (1 - costheta) + ux * sintheta
+    RA22 = costheta + uz * uz * (1 - costheta)
+
+    # Determine the Euler angles
+    if ((RA22 < -1 + tol) and (RA22 > -1 - tol)):
+        cosbeta = -1
+        sinbeta = 0
+        cosgamma = RA11
+        singamma = RA01
+        cosalpha = 1
+        sinalpha = 0
+    elif ((RA22 < 1 + tol) and (RA22 > 1 - tol)):
+        cosbeta = 1
+        sinbeta = 0
+        cosgamma = RA11
+        singamma = -RA01
+        cosalpha = 1
+        sinalpha = 0
+    else:
+        cosbeta = RA22
+        sinbeta = np.sqrt(1 - cosbeta ** 2)
+        norm1 = np.sqrt(RA20 * RA20 + RA21 * RA21)
+        norm2 = np.sqrt(RA02 * RA02 + RA12 * RA12)
+        cosgamma = -RA20 / norm1
+        singamma = RA21 / norm1
+        cosalpha = RA02 / norm2
+        sinalpha = RA12 / norm2
+    alpha = np.arctan2(sinalpha, cosalpha)
+    beta = np.arctan2(sinbeta, cosbeta)
+    gamma = np.arctan2(singamma, cosgamma)
+
+    return alpha, beta, gamma
+
+
+def rotate_basis(P, alpha=0., beta=0., gamma=0.):
+    """
+    Rotates coordinate basis for point P by specified angles.
+    """
+    Rx = np.array([[1., 0., 0.],
+                  [0., np.cos(alpha), -np.sin(alpha)],
+                  [0., np.sin(alpha), np.cos(alpha)]])
+    Ry = np.array([[np.cos(beta), 0., np.sin(beta)],
+                  [0., 1., 0.],
+                  [-np.sin(beta), 0., np.cos(beta)]])
+    Rz = np.array([[np.cos(gamma), -np.sin(gamma), 0.],
+                  [np.sin(gamma), np.cos(gamma), 0.],
+                  [0., 0., 1]])
+    R = Rz @ Ry @ Rx
+    return R @ P
+
+
+def rotate_axis_angle(P, u, theta):
+    """
+    Rotates coordinate around axis u by angle theta
+    """
+    u = normalize(u)
+    costheta = np.cos(theta)
+    sintheta = np.sin(theta)
+    ux, uy, uz = u[0], u[1], u[2]
+    R = np.array([[costheta + ux**2*(1.-costheta),
+                   ux*uy*(1.-costheta) - uz*sintheta,
+                   ux*uz*(1.-costheta) + uy*sintheta],
+                  [uy*ux*(1.-costheta) + uz*sintheta,
+                   costheta + uy**2*(1.-costheta),
+                   uy*uz*(1.-costheta) - ux*sintheta],
+                  [uz*ux*(1.-costheta) - uy*sintheta,
+                   uz*uy*(1.-costheta) + ux*sintheta,
+                   costheta + uz**2*(1.-costheta)]])
+    return R @ P
+
+
+def haversine(lat1, lon1, lat2, lon2):
+    """
+    Calculate the great circle distance between two points
+    (specified in decimal degrees)
+
+    Returns distance in degress
+    """
+    lat1, lon1 = np.radians(lat1), np.radians(lon1)
+    lat2, lon2 = np.radians(lat2), np.radians(lon2)
+    dlon = lon2 - lon1
+    dlat = lat2 - lat1
+    a = np.sin(dlat/2.)**2 + np.cos(lat1) * np.cos(lat2) * np.sin(dlon/2.)**2
+    dist = 2*np.arcsin(np.sqrt(a))
+    return np.degrees(dist)
