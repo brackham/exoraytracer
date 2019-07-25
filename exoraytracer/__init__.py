@@ -30,4 +30,4 @@ if not _ASTROPY_SETUP_:   # noqa
     # Then you can be explicit to control what ends up in the namespace,
     # __all__ += ['do_primes']   # noqa
     # or you can keep everything from the subpackage with the following instead
-    __all__ += core.__all__
+    __all__ += .core.__all__
