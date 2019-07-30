@@ -1,10 +1,10 @@
 **************************
-exoraytracer Documentation
+exotrace Documentation
 **************************
 
-This is the documentation for exoraytracer.
+This is the documentation for exotrace.
 
 Reference/API
 =============
 
-.. automodapi:: exoraytracer
+.. automodapi:: exotrace

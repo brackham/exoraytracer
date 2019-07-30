@@ -1,17 +1,17 @@
-exoraytracer
+exotrace
 --------------------------------
 
-.. image:: https://travis-ci.com/brackham/exoraytracer.svg?branch=master
-    :target: https://travis-ci.com/brackham/exoraytracer
+.. image:: https://travis-ci.com/brackham/exotrace.svg?branch=master
+    :target: https://travis-ci.com/brackham/exotrace
     :alt: Travis CI Build Status
-.. image:: https://readthedocs.org/projects/exoraytracer/badge/?version=latest
-    :target: https://exoraytracer.readthedocs.io/en/latest/?badge=latest
+.. image:: https://readthedocs.org/projects/exotrace/badge/?version=latest
+    :target: https://exotrace.readthedocs.io/en/latest/?badge=latest
     :alt: Documentation Status
 .. image:: http://img.shields.io/badge/powered%20by-AstroPy-orange.svg?style=flat
     :target: http://www.astropy.org
     :alt: Powered by Astropy Badge
 
-Ray-tracing exoplanetary systems. For more information, `read the docs <https://exoraytracer.readthedocs.io>`_.
+Ray-tracing exoplanetary systems. For more information, `read the docs <https://exotrace.readthedocs.io>`_.
 
 
 License
@@ -27,5 +27,5 @@ more information.
 Contributing
 ------------
 
-We love contributions! ``exoraytracer`` is open source,
+We love contributions! ``exotrace`` is open source,
 built on open source, and we'd love to have you hang out in our community.

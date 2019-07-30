@@ -1,4 +1,4 @@
-name: exoraytracer
+name: exotrace
 
 channels:
     - astropy

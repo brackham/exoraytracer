@@ -1,9 +1,9 @@
 Documentation
 =============
 
-This is the documentation for :py:mod:`exoraytracer`.
+This is the documentation for :py:mod:`exotrace`.
 
 .. toctree::
   :maxdepth: 2
 
-  exoraytracer/index.rst
+  exotrace/index.rst

@@ -41,12 +41,12 @@ env:
         - SETUP_CMD='test'
         - EVENT_TYPE='pull_request push'
 
-        
+
         # List runtime dependencies for the package that are available as conda
         # packages here.
         - CONDA_DEPENDENCIES=''
         - CONDA_DEPENDENCIES_DOC='sphinx-astropy'
-        
+
         # List other runtime dependencies for the package that are available as
         # pip packages here.
         - PIP_DEPENDENCIES=''
@@ -122,14 +122,14 @@ matrix:
         # Do a PEP8 test with flake8
         - os: linux
           stage: Initial tests
-          env: MAIN_CMD='flake8 exoraytracer --count --show-source --statistics $FLAKE8_OPT' SETUP_CMD=''
+          env: MAIN_CMD='flake8 exotrace --count --show-source --statistics $FLAKE8_OPT' SETUP_CMD=''
 
     allow_failures:
         # Do a PEP8 test with flake8
         # (do allow to fail unless your code completely compliant)
         # - os: linux
         #   stage: Initial tests
-        #   env: MAIN_CMD='flake8 exoraytracer --count --show-source --statistics $FLAKE8_OPT' SETUP_CMD=''
+        #   env: MAIN_CMD='flake8 exotrace --count --show-source --statistics $FLAKE8_OPT' SETUP_CMD=''
 
 install:
 
@@ -162,4 +162,4 @@ script:
 after_success:
     # If coveralls.io is set up for this package, uncomment the line below.
     # The coveragerc file may be customized as needed for your package.
-    # - if [[ $SETUP_CMD == *coverage* ]]; then coveralls --rcfile='exoraytracer/tests/coveragerc'; fi
+    # - if [[ $SETUP_CMD == *coverage* ]]; then coveralls --rcfile='exotrace/tests/coveragerc'; fi
