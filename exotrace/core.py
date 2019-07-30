@@ -39,7 +39,7 @@ class Star:
         self.phi = np.zeros((res, res))
         self.lat = np.zeros((res, res))
         self.lon = np.zeros((res, res))
-        self.I = np.zeros((res, res))
+        self.flux = np.zeros((res, res))
         self.spots = np.array([])
 
     def add(self, spots, overwrite=False):
@@ -55,19 +55,19 @@ class Star:
         """
         Calculate the intensity map
         """
-        self.I = np.ones((self.res, self.res))
-        self.I = np.ma.masked_where(np.isnan(self.r), self.I)
+        self.flux = np.ones((self.res, self.res))
+        self.flux = np.ma.masked_where(np.isnan(self.r), self.flux)
         for spot in self.spots:
             dist = haversine(self.lat, self.lon, spot.lat, spot.lon)
             spotted = np.ma.masked_where(dist <= spot.radius, dist)
-            self.I[spotted.mask] = spot.contrast
+            self.flux[spotted.mask] = spot.contrast
 
     def limb_darken(self):
         """
         Apply the quadratic limb darkening law
         """
-        self.I = self.I - self.u1*(self.I - self.mu) \
-                        - self.u2*(self.I - self.mu)**2
+        self.flux = self.flux - self.u1*(self.flux - self.mu) \
+                        - self.u2*(self.flux - self.mu)**2
 
     def rotate(self, angle):
         """
