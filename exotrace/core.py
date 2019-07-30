@@ -1,3 +1,4 @@
+"""`exotrace` core functionality."""
 import numpy as np
 
 
@@ -5,18 +6,22 @@ __all__ = ['Ray', 'Star', 'Spot', 'Scene', 'intersect']
 
 
 class Ray:
-    """A ray"""
+    """A Ray."""
+
     def __init__(self, origin, direction):
+        """Initialize a Ray."""
         self.origin = origin
         self.direction = direction
         self.u = normalize(direction-origin)
 
 
 class Star:
-    """A star"""
+    """A Star."""
+
     def __init__(self, center, radius,
                  axis=np.array([0., 1., 0.]),
                  res=100):
+        """Initialize a Star."""
         self.center = center
         self.radius = radius
         self.axis = normalize(axis)
@@ -43,18 +48,14 @@ class Star:
         self.spots = np.array([])
 
     def add(self, spots, overwrite=False):
-        """
-        Add a feature
-        """
+        """Add a feature."""
         if overwrite:
             self.spots = spots
         else:
             self.spots = np.append(self.spots, spots)
 
     def calc_flux(self):
-        """
-        Calculate the flux map
-        """
+        """Calculate the flux map."""
         self.flux = np.ones((self.res, self.res))
         self.flux = np.ma.masked_where(np.isnan(self.r), self.flux)
         for spot in self.spots:
@@ -63,16 +64,13 @@ class Star:
             self.flux[spotted.mask] = spot.contrast
 
     def limb_darken(self):
-        """
-        Apply the quadratic limb darkening law
-        """
-        self.flux = self.flux - self.u1*(self.flux - self.mu) \
-                    - self.u2*(self.flux - self.mu)**2
+        """Apply the quadratic limb darkening law."""
+        self.flux = (self.flux -
+                     self.u1*(self.flux - self.mu) -
+                     self.u2*(self.flux - self.mu)**2)
 
     def rotate(self, angle):
-        """
-        Rotate about axis by a given angle in degrees
-        """
+        """Rotate about axis by a given angle in degrees."""
         self.meridian = (self.meridian + angle) % 360.
         if self.meridian > 180.:
             self.meridian -= 360.
@@ -88,16 +86,12 @@ class Star:
         self.limb_darken()
 
     def set_meridian(self, new_meridian):
-        """
-        Set the meridian to a specified longitude in degrees
-        """
+        """Set the meridian to a specified longitude in degrees."""
         angle = new_meridian-self.meridian
         self.rotate(angle)
 
     def set_inclination(self, new_inclination):
-        """
-        Set the inclination to a specified degree value
-        """
+        """Set the inclination to a specified degree value."""
         angle = new_inclination - self.inc
         for j, i in np.ndindex(self.shape):
             self.P[j, i, :] = rotate_basis(self.P[j, i, :],
@@ -113,8 +107,10 @@ class Star:
 
 
 class Spot:
-    """A spot"""
+    """A Spot."""
+
     def __init__(self, lat, lon, radius, contrast):
+        """Initialize a Spot."""
         self.lat = np.float(lat)
         self.lon = np.float(lon)
         self.radius = np.float(radius)
@@ -122,8 +118,10 @@ class Spot:
 
 
 class Scene:
-    """A scene"""
+    """A Scene."""
+
     def __init__(self, objects, res=100):
+        """Initialize a Scene."""
         self.objects = objects
         self.res = res
 
@@ -135,7 +133,7 @@ def normalize(x):
 
 def intersect(Ray, Star):
     """
-    Intersection of a ray and a sphere
+    Intersection of a ray and a sphere.
 
     See: https://en.wikipedia.org/wiki/Line-sphere_intersection
     """
@@ -156,9 +154,7 @@ def intersect(Ray, Star):
 
 
 def angle_between(v0, v1):
-    """
-    Determine the angle between two vectors
-    """
+    """Determine the angle between two vectors."""
     v0 = normalize(v0)
     v1 = normalize(v1)
     theta = np.arccos(np.dot(v0, v1))
@@ -168,6 +164,7 @@ def angle_between(v0, v1):
 def get_Euler_angles(u, theta):
     """
     Get the Euler angles for a specified rotation about an axis.
+
     Adapted from `starry` jupyter notebook.
     """
     ux, uy, uz = u[0], u[1], u[2]
@@ -222,9 +219,7 @@ def get_Euler_angles(u, theta):
 
 
 def rotate_basis(P, alpha=0., beta=0., gamma=0.):
-    """
-    Rotates coordinate basis for point P by specified angles.
-    """
+    """Rotate coordinate basis for point P by specified angles."""
     Rx = np.array([[1., 0., 0.],
                   [0., np.cos(alpha), -np.sin(alpha)],
                   [0., np.sin(alpha), np.cos(alpha)]])
@@ -239,9 +234,7 @@ def rotate_basis(P, alpha=0., beta=0., gamma=0.):
 
 
 def rotate_axis_angle(P, u, theta):
-    """
-    Rotates coordinate around axis u by angle theta
-    """
+    """Rotate coordinate around axis u by angle theta."""
     u = normalize(u)
     costheta = np.cos(theta)
     sintheta = np.sin(theta)
@@ -260,8 +253,9 @@ def rotate_axis_angle(P, u, theta):
 
 def haversine(lat1, lon1, lat2, lon2):
     """
-    Calculate the great circle distance between two points
-    (specified in decimal degrees)
+    Calculate the great circle distance between two points.
+
+    (Points specified in decimal degrees)
 
     Returns distance in degress
     """
