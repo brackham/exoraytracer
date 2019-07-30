@@ -51,9 +51,9 @@ class Star:
         else:
             self.spots = np.append(self.spots, spots)
 
-    def calc_I(self):
+    def calc_flux(self):
         """
-        Calculate the intensity map
+        Calculate the flux map
         """
         self.flux = np.ones((self.res, self.res))
         self.flux = np.ma.masked_where(np.isnan(self.r), self.flux)
@@ -84,7 +84,7 @@ class Star:
         self.phi = np.arctan2(self.P[:, :, 0], self.P[:, :, 1])
         self.lat = np.degrees(self.theta-np.pi/2.)
         self.lon = np.degrees(self.phi)
-        self.calc_I()
+        self.calc_flux()
         self.limb_darken()
 
     def set_meridian(self, new_meridian):
@@ -107,7 +107,7 @@ class Star:
         self.phi = np.arctan2(self.P[:, :, 0], self.P[:, :, 1])
         self.lat = np.degrees(self.theta-np.pi/2.)
         self.lon = np.degrees(self.phi)
-        self.calc_I()
+        self.calc_flux()
         self.limb_darken()
         self.inc = new_inclination
 
