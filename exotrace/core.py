@@ -67,7 +67,7 @@ class Star:
         Apply the quadratic limb darkening law
         """
         self.flux = self.flux - self.u1*(self.flux - self.mu) \
-                        - self.u2*(self.flux - self.mu)**2
+                    - self.u2*(self.flux - self.mu)**2
 
     def rotate(self, angle):
         """
