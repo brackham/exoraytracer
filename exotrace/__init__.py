@@ -21,7 +21,7 @@ class UnsupportedPythonError(Exception):
 
 
 if LooseVersion(sys.version) < LooseVersion(__minimum_python_version__):
-    raise UnsupportedPythonError("exoraytracer does not support Python < {}"
+    raise UnsupportedPythonError("exotrace does not support Python < {}"
                                  .format(__minimum_python_version__))
 
 if not _ASTROPY_SETUP_:   # noqa
