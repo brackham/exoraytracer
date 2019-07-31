@@ -1,8 +1,8 @@
 **************************
-exotrace Documentation
+exotrace API
 **************************
 
-This is the documentation for exotrace.
+Here's what you need to know about :py:mod:`exotrace`.
 
 Reference/API
 =============
