@@ -127,6 +127,7 @@ class Scene:
 
 
 def normalize(x):
+    """Normalize a vector."""
     x /= np.linalg.norm(x)
     return x
 
