@@ -2,7 +2,7 @@
 import numpy as np
 
 
-__all__ = ['Ray', 'Star', 'Spot', 'Scene', 'intersect']
+# __all__ = ['Ray', 'Star', 'Spot', 'Scene', 'intersect']
 
 
 class Ray:
