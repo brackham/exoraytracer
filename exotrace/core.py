@@ -128,7 +128,7 @@ class Scene:
         self.shape = (res, res)
         self.get_extent()
 
-        self.flux = np.zeros(self.shape)
+        self.flux = np.ones(self.shape)*np.nan
         self.body = get_none_array(self.shape)
         self.mu = np.ones(self.shape)*np.nan
         self.t = np.ones(self.shape)*np.inf
