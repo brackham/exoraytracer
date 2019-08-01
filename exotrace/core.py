@@ -126,7 +126,12 @@ class Scene:
         self.bodies = bodies
         self.res = res
         self.shape = (res, res)
+        self.get_extent()
+
         self.flux = np.zeros(self.shape)
+        self.body = get_none_array(self.shape)
+        self.mu = np.ones(self.shape)*np.nan
+        self.t = np.ones(self.shape)*np.inf
 
     def add(self, bodies):
         """Add bodies to Scene."""
@@ -135,17 +140,20 @@ class Scene:
 
     def get_extent(self):
         """Get the extent of the Scene."""
-        xmin = np.min([body.center[0]-body.radius for body in self.bodies])
-        xmax = np.max([body.center[0]+body.radius for body in self.bodies])
-        ymin = np.min([body.center[1]-body.radius for body in self.bodies])
-        ymax = np.max([body.center[1]+body.radius for body in self.bodies])
-        zmax = np.max([body.center[2]+body.radius for body in self.bodies])
+        if len(self.bodies) > 0:
+            xmin = np.min([body.center[0]-body.radius for body in self.bodies])
+            xmax = np.max([body.center[0]+body.radius for body in self.bodies])
+            ymin = np.min([body.center[1]-body.radius for body in self.bodies])
+            ymax = np.max([body.center[1]+body.radius for body in self.bodies])
+            zmax = np.max([body.center[2]+body.radius for body in self.bodies])
+        else:
+            xmin, xmax = -1, 1
+            ymin, ymax = -1, 1
+            zmax = np.inf
         self.extent = (np.min([xmin, ymin]), np.max([xmax, ymax]))
-        self.zmax = zmax
         self.x = np.linspace(*self.extent, self.res)
         self.y = np.linspace(*self.extent, self.res)
-        self.mu = np.ones(self.shape)*np.nan
-        self.t = np.ones(self.shape)*np.inf
+        self.zmax = zmax
 
     def trace(self):
         """Perform the ray trace."""
