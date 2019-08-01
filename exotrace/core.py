@@ -1,8 +1,9 @@
 """`exotrace` core functionality."""
+import matplotlib.pyplot as plt
 import numpy as np
 
 
-__all__ = ['Ray', 'Star', 'Spot', 'Scene', 'intersect']
+# __all__ = ['Ray', 'Star', 'Spot', 'Scene', 'intersect']
 
 
 class Ray:
@@ -120,13 +121,73 @@ class Spot:
 class Scene:
     """A Scene."""
 
-    def __init__(self, objects, res=100):
+    def __init__(self, bodies=np.array([]), res=100):
         """Initialize a Scene."""
-        self.objects = objects
+        self.bodies = bodies
         self.res = res
+        self.shape = (res, res)
+        self.flux = np.zeros(self.shape)
+
+    def add(self, bodies):
+        """Add bodies to Scene."""
+        self.bodies = np.append(self.bodies, bodies)
+        self.get_extent()
+
+    def get_extent(self):
+        """Get the extent of the Scene."""
+        xmin = np.min([body.center[0]-body.radius for body in self.bodies])
+        xmax = np.max([body.center[0]+body.radius for body in self.bodies])
+        ymin = np.min([body.center[1]-body.radius for body in self.bodies])
+        ymax = np.max([body.center[1]+body.radius for body in self.bodies])
+        zmax = np.max([body.center[2]+body.radius for body in self.bodies])
+        self.extent = (np.min([xmin, ymin]), np.max([xmax, ymax]))
+        self.zmax = zmax
+        self.x = np.linspace(*self.extent, self.res)
+        self.y = np.linspace(*self.extent, self.res)
+        self.mu = np.zeros(self.shape)
+        self.t = np.ones(self.shape)*np.inf
+
+    def trace(self):
+        """Perform the ray trace."""
+        for j, i in np.ndindex(self.shape):
+            ray = Ray(origin=np.array([self.x[i], self.y[j], self.zmax]),
+                      direction=np.array([self.x[i], self.y[j], 0.]))
+            t_min = np.inf
+            for body in self.bodies:
+                t = intersect(ray, body)
+                if t >= t_min:
+                    continue
+                t_min = t
+                P = ray.origin + ray.u*t
+                # N = normalize(P-body.center)
+                mu = (np.dot(ray.origin-P, P-body.center) /
+                      (np.linalg.norm(ray.origin-P) *
+                       np.linalg.norm(P-body.center)))
+        #         self.N[j, i] = N
+                self.t[j, i] = t
+                self.flux[j, i] = 1.
+                self.mu[j, i] = mu
+
+    def show(self, array='flux'):
+        """Show a property of the Scene."""
+        arrays = {'flux': self.flux,
+                  'mu': self.mu,
+                  't': self.t}
+        cmaps = {'flux': 'viridis',
+                 'mu': 'viridis',
+                 't': 'viridis'}
+        values = arrays[array]
+        cmap = cmaps[array]
+        fig, ax = plt.subplots()
+        im = ax.imshow(values, origin='lower', cmap=cmap)
+        ax.set_xlabel('x (pixel)')
+        ax.set_ylabel('y (pixel)')
+        plt.colorbar(im, label=array)
+        plt.show()
 
 
 def normalize(x):
+    """Normalize a vector."""
     x /= np.linalg.norm(x)
     return x
 
