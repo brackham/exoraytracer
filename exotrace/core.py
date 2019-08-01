@@ -166,6 +166,7 @@ class Scene:
                 if t >= t_min:
                     continue
                 t_min = t
+                self.body[j, i] = body
                 P = ray.origin + ray.u*t
                 # N = normalize(P-body.center)
                 mu = (np.dot(ray.origin-P, P-body.center) /
