@@ -327,3 +327,11 @@ def haversine(lat1, lon1, lat2, lon2):
     a = np.sin(dlat/2.)**2 + np.cos(lat1) * np.cos(lat2) * np.sin(dlon/2.)**2
     dist = 2*np.arcsin(np.sqrt(a))
     return np.degrees(dist)
+
+
+def get_none_array(shape):
+    """Get a numpy array of Nones with the specified shape."""
+    arr = None
+    for dim in shape:
+        arr = [arr]*dim
+    return np.array(arr)
