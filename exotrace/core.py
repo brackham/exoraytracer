@@ -144,7 +144,7 @@ class Scene:
         self.zmax = zmax
         self.x = np.linspace(*self.extent, self.res)
         self.y = np.linspace(*self.extent, self.res)
-        self.mu = np.zeros(self.shape)
+        self.mu = np.ones(self.shape)*np.nan
         self.t = np.ones(self.shape)*np.inf
 
     def trace(self):
