@@ -153,10 +153,17 @@ class Scene:
         self.shape = (res, res)
         self.get_extent()
 
-        self.flux = np.ones(self.shape)*np.nan
         self.body = get_none_array(self.shape)
-        self.mu = np.ones(self.shape)*np.nan
         self.t = np.ones(self.shape)*np.inf
+        self.P = np.ones((self.res, self.res, 3))*np.nan
+        self.N = np.ones((self.res, self.res, 3))*np.nan
+        self.mu = np.ones(self.shape)*np.nan
+        self.r = np.ones(self.shape)*np.nan
+        self.theta = np.ones(self.shape)*np.nan
+        self.phi = np.ones(self.shape)*np.nan
+        self.lat = np.ones(self.shape)*np.nan
+        self.lon = np.ones(self.shape)*np.nan
+        self.flux = np.ones(self.shape)*np.nan
 
     def add(self, bodies):
         """Add bodies to Scene."""
@@ -191,27 +198,56 @@ class Scene:
                 if t >= t_min:
                     continue
                 t_min = t
-                self.body[j, i] = body
                 P = ray.origin + ray.u*t
-                # N = normalize(P-body.center)
+                N = normalize(P-body.center)
                 mu = (np.dot(ray.origin-P, P-body.center) /
                       (np.linalg.norm(ray.origin-P) *
                        np.linalg.norm(P-body.center)))
-        #         self.N[j, i] = N
+
+                # The standard transformation places the observer at x=+inf
+                # r, theta, phi = cart2sph(*N)
+                # Instead, let's place the observer at z=+inf
+                r, theta, phi = cart2sph(N[2], N[0], N[1])
+                lat = np.degrees(theta)
+                lon = np.degrees(phi)
+
+                self.body[j, i] = body
                 self.t[j, i] = t
-                self.flux[j, i] = 1.
+                self.P[j, i] = P
+                self.N[j, i] = N
                 self.mu[j, i] = mu
+                self.r[j, i] = r
+                self.theta[j, i] = theta
+                self.phi[j, i] = phi
+                self.lat[j, i] = lat
+                self.lon[j, i] = lon
+                self.flux[j, i] = 1.
 
     def show(self, array='flux'):
         """Show a property of the Scene."""
         arrays = {'flux': self.flux,
                   'mu': self.mu,
-                  't': self.t}
+                  't': self.t,
+                  'P': self.P,
+                  'P[0]': self.P[:, :, 0],
+                  'P[1]': self.P[:, :, 1],
+                  'P[2]': self.P[:, :, 2],
+                  'N': self.N,
+                  'N[0]': self.N[:, :, 0],
+                  'N[1]': self.N[:, :, 1],
+                  'N[2]': self.N[:, :, 2],
+                  'r': self.r,
+                  'theta': self.theta,
+                  'phi': self.phi,
+                  'lat': self.lat,
+                  'lon': self.lon}
+
         cmaps = {'flux': 'viridis',
                  'mu': 'viridis',
                  't': 'viridis'}
+
         values = arrays[array]
-        cmap = cmaps[array]
+        cmap = cmaps.get(array, 'viridis')
         fig, ax = plt.subplots()
         im = ax.imshow(values, origin='lower', cmap=cmap)
         ax.set_xlabel('x (pixel)')
@@ -369,3 +405,12 @@ def get_none_array(shape):
     for dim in shape:
         arr = [arr]*dim
     return np.array(arr)
+
+
+def cart2sph(x, y, z):
+    """Transform cartesian to spherical coordinates."""
+    hxy = np.hypot(x, y)
+    r = np.hypot(hxy, z)
+    el = np.arctan2(z, hxy)
+    az = np.arctan2(y, x)
+    return r, el, az
