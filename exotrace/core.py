@@ -16,22 +16,39 @@ class Ray:
         self.u = normalize(direction-origin)
 
 
-class Star:
-    """A Star."""
+class Body:
+    """Base class for bodies in the system."""
 
-    def __init__(self, center, radius,
-                 axis=np.array([0., 1., 0.]),
-                 res=100):
-        """Initialize a Star."""
+    def __init__(self, center, radius, axis=np.array([0., 1., 0.])):
+        """
+        Initialize a Body.
+
+        Parameters
+        ----------
+        center : array-like
+            The body center position.
+        radius : float
+            The body radius.
+        axis : array-like
+            The axis of rotation.
+
+        Returns
+        -------
+        A Body.
+
+        """
         self.center = center
         self.radius = radius
         self.axis = normalize(axis)
         self.inc = 90.
         self.meridian = 0.
-        self.res = res
-        self.shape = (res, res)
         self.u1 = 0.
         self.u2 = 0.
+
+        # Probably need to get rid of all these
+        res = 100
+        self.res = res
+        self.shape = (res, res)
         self.x = np.linspace(-radius, radius, res)
         self.y = np.linspace(-radius, radius, res)
         self.P = np.zeros((res, res, 3))
@@ -46,14 +63,6 @@ class Star:
         self.lat = np.zeros((res, res))
         self.lon = np.zeros((res, res))
         self.flux = np.zeros((res, res))
-        self.spots = np.array([])
-
-    def add(self, spots, overwrite=False):
-        """Add a feature."""
-        if overwrite:
-            self.spots = spots
-        else:
-            self.spots = np.append(self.spots, spots)
 
     def calc_flux(self):
         """Calculate the flux map."""
@@ -107,6 +116,22 @@ class Star:
         self.inc = new_inclination
 
 
+class Star(Body):
+    """A Star."""
+
+    def __init__(self, *args, **kwargs):
+        """Initialize a Star."""
+        super().__init__(*args, **kwargs)
+        self.spots = np.array([])
+
+    def add(self, spots, overwrite=False):
+        """Add a feature."""
+        if overwrite:
+            self.spots = spots
+        else:
+            self.spots = np.append(self.spots, spots)
+
+
 class Spot:
     """A Spot."""
 
@@ -126,7 +151,19 @@ class Scene:
         self.bodies = bodies
         self.res = res
         self.shape = (res, res)
-        self.flux = np.zeros(self.shape)
+        self.get_extent()
+
+        self.body = get_none_array(self.shape)
+        self.t = np.ones(self.shape)*np.inf
+        self.P = np.ones((self.res, self.res, 3))*np.nan
+        self.N = np.ones((self.res, self.res, 3))*np.nan
+        self.mu = np.ones(self.shape)*np.nan
+        self.r = np.ones(self.shape)*np.nan
+        self.theta = np.ones(self.shape)*np.nan
+        self.phi = np.ones(self.shape)*np.nan
+        self.lat = np.ones(self.shape)*np.nan
+        self.lon = np.ones(self.shape)*np.nan
+        self.flux = np.ones(self.shape)*np.nan
 
     def add(self, bodies):
         """Add bodies to Scene."""
@@ -135,17 +172,20 @@ class Scene:
 
     def get_extent(self):
         """Get the extent of the Scene."""
-        xmin = np.min([body.center[0]-body.radius for body in self.bodies])
-        xmax = np.max([body.center[0]+body.radius for body in self.bodies])
-        ymin = np.min([body.center[1]-body.radius for body in self.bodies])
-        ymax = np.max([body.center[1]+body.radius for body in self.bodies])
-        zmax = np.max([body.center[2]+body.radius for body in self.bodies])
+        if len(self.bodies) > 0:
+            xmin = np.min([body.center[0]-body.radius for body in self.bodies])
+            xmax = np.max([body.center[0]+body.radius for body in self.bodies])
+            ymin = np.min([body.center[1]-body.radius for body in self.bodies])
+            ymax = np.max([body.center[1]+body.radius for body in self.bodies])
+            zmax = np.max([body.center[2]+body.radius for body in self.bodies])
+        else:
+            xmin, xmax = -1, 1
+            ymin, ymax = -1, 1
+            zmax = np.inf
         self.extent = (np.min([xmin, ymin]), np.max([xmax, ymax]))
-        self.zmax = zmax
         self.x = np.linspace(*self.extent, self.res)
         self.y = np.linspace(*self.extent, self.res)
-        self.mu = np.zeros(self.shape)
-        self.t = np.ones(self.shape)*np.inf
+        self.zmax = zmax
 
     def trace(self):
         """Perform the ray trace."""
@@ -159,25 +199,55 @@ class Scene:
                     continue
                 t_min = t
                 P = ray.origin + ray.u*t
-                # N = normalize(P-body.center)
+                N = normalize(P-body.center)
                 mu = (np.dot(ray.origin-P, P-body.center) /
                       (np.linalg.norm(ray.origin-P) *
                        np.linalg.norm(P-body.center)))
-        #         self.N[j, i] = N
+
+                # The standard transformation places the observer at x=+inf
+                # r, theta, phi = cart2sph(*N)
+                # Instead, let's place the observer at z=+inf
+                r, theta, phi = cart2sph(N[2], N[0], N[1])
+                lat = np.degrees(theta)
+                lon = np.degrees(phi)
+
+                self.body[j, i] = body
                 self.t[j, i] = t
-                self.flux[j, i] = 1.
+                self.P[j, i] = P
+                self.N[j, i] = N
                 self.mu[j, i] = mu
+                self.r[j, i] = r
+                self.theta[j, i] = theta
+                self.phi[j, i] = phi
+                self.lat[j, i] = lat
+                self.lon[j, i] = lon
+                self.flux[j, i] = 1.
 
     def show(self, array='flux'):
         """Show a property of the Scene."""
         arrays = {'flux': self.flux,
                   'mu': self.mu,
-                  't': self.t}
+                  't': self.t,
+                  'P': self.P,
+                  'P[0]': self.P[:, :, 0],
+                  'P[1]': self.P[:, :, 1],
+                  'P[2]': self.P[:, :, 2],
+                  'N': self.N,
+                  'N[0]': self.N[:, :, 0],
+                  'N[1]': self.N[:, :, 1],
+                  'N[2]': self.N[:, :, 2],
+                  'r': self.r,
+                  'theta': self.theta,
+                  'phi': self.phi,
+                  'lat': self.lat,
+                  'lon': self.lon}
+
         cmaps = {'flux': 'viridis',
                  'mu': 'viridis',
                  't': 'viridis'}
+
         values = arrays[array]
-        cmap = cmaps[array]
+        cmap = cmaps.get(array, 'viridis')
         fig, ax = plt.subplots()
         im = ax.imshow(values, origin='lower', cmap=cmap)
         ax.set_xlabel('x (pixel)')
@@ -327,3 +397,20 @@ def haversine(lat1, lon1, lat2, lon2):
     a = np.sin(dlat/2.)**2 + np.cos(lat1) * np.cos(lat2) * np.sin(dlon/2.)**2
     dist = 2*np.arcsin(np.sqrt(a))
     return np.degrees(dist)
+
+
+def get_none_array(shape):
+    """Get a numpy array of Nones with the specified shape."""
+    arr = None
+    for dim in shape:
+        arr = [arr]*dim
+    return np.array(arr)
+
+
+def cart2sph(x, y, z):
+    """Transform cartesian to spherical coordinates."""
+    hxy = np.hypot(x, y)
+    r = np.hypot(hxy, z)
+    el = np.arctan2(z, hxy)
+    az = np.arctan2(y, x)
+    return r, el, az
