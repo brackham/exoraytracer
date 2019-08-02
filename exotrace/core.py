@@ -223,16 +223,14 @@ class Scene:
                 self.lon[j, i] = lon
                 self.flux[j, i] = 1.
 
-    def show(self, array='flux'):
+    def show(self, array='flux', body=None):
         """Show a property of the Scene."""
         arrays = {'flux': self.flux,
                   'mu': self.mu,
                   't': self.t,
-                  'P': self.P,
                   'P[0]': self.P[:, :, 0],
                   'P[1]': self.P[:, :, 1],
                   'P[2]': self.P[:, :, 2],
-                  'N': self.N,
                   'N[0]': self.N[:, :, 0],
                   'N[1]': self.N[:, :, 1],
                   'N[2]': self.N[:, :, 2],
@@ -270,11 +268,15 @@ class Scene:
                  'lon': 180}
 
         values = arrays[array]
+        if body is None:
+            ma = np.ma.masked_invalid(values)
+        else:
+            ma = np.ma.masked_where(self.body != body, values)
         cmap = cmaps.get(array, 'viridis')
-        vmin = vmins.get(array, np.ma.masked_invalid(values).min())
-        vmax = vmaxs.get(array, np.ma.masked_invalid(values).max())
+        vmin = vmins.get(array, ma.min())
+        vmax = vmaxs.get(array, ma.max())
         fig, ax = plt.subplots()
-        im = ax.imshow(values, origin='lower', cmap=cmap, vmin=vmin, vmax=vmax)
+        im = ax.imshow(ma, origin='lower', cmap=cmap, vmin=vmin, vmax=vmax)
         ax.set_xlabel('x (pixel)')
         ax.set_ylabel('y (pixel)')
         plt.colorbar(im, label=array)
