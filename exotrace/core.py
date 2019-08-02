@@ -244,12 +244,37 @@ class Scene:
 
         cmaps = {'flux': 'viridis',
                  'mu': 'viridis',
-                 't': 'viridis'}
+                 't': 'viridis',
+                 'N[0]': 'RdBu',
+                 'N[1]': 'RdBu',
+                 'N[2]': 'RdBu',
+                 'theta': 'RdBu',
+                 'phi': 'RdBu',
+                 'lat': 'RdBu',
+                 'lon': 'RdBu'}
+
+        vmins = {'N[0]': -1,
+                 'N[1]': -1,
+                 'N[2]': -1,
+                 'theta': -np.pi/2.,
+                 'phi': -np.pi,
+                 'lat': -90,
+                 'lon': -180}
+
+        vmaxs = {'N[0]': 1,
+                 'N[1]': 1,
+                 'N[2]': 1,
+                 'theta': np.pi/2.,
+                 'phi': np.pi,
+                 'lat': 90,
+                 'lon': 180}
 
         values = arrays[array]
         cmap = cmaps.get(array, 'viridis')
+        vmin = vmins.get(array, np.ma.masked_invalid(values).min())
+        vmax = vmaxs.get(array, np.ma.masked_invalid(values).max())
         fig, ax = plt.subplots()
-        im = ax.imshow(values, origin='lower', cmap=cmap)
+        im = ax.imshow(values, origin='lower', cmap=cmap, vmin=vmin, vmax=vmax)
         ax.set_xlabel('x (pixel)')
         ax.set_ylabel('y (pixel)')
         plt.colorbar(im, label=array)
