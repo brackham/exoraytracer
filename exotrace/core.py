@@ -16,22 +16,39 @@ class Ray:
         self.u = normalize(direction-origin)
 
 
-class Star:
-    """A Star."""
+class Body:
+    """Base class for bodies in the system."""
 
-    def __init__(self, center, radius,
-                 axis=np.array([0., 1., 0.]),
-                 res=100):
-        """Initialize a Star."""
+    def __init__(self, center, radius, axis=np.array([0., 1., 0.])):
+        """
+        Initialize a Body.
+
+        Parameters
+        ----------
+        center : array-like
+            The body center position.
+        radius : float
+            The body radius.
+        axis : array-like
+            The axis of rotation.
+
+        Returns
+        -------
+        A Body.
+
+        """
         self.center = center
         self.radius = radius
         self.axis = normalize(axis)
         self.inc = 90.
         self.meridian = 0.
-        self.res = res
-        self.shape = (res, res)
         self.u1 = 0.
         self.u2 = 0.
+
+        # Probably need to get rid of all these
+        res = 100
+        self.res = res
+        self.shape = (res, res)
         self.x = np.linspace(-radius, radius, res)
         self.y = np.linspace(-radius, radius, res)
         self.P = np.zeros((res, res, 3))
@@ -46,14 +63,6 @@ class Star:
         self.lat = np.zeros((res, res))
         self.lon = np.zeros((res, res))
         self.flux = np.zeros((res, res))
-        self.spots = np.array([])
-
-    def add(self, spots, overwrite=False):
-        """Add a feature."""
-        if overwrite:
-            self.spots = spots
-        else:
-            self.spots = np.append(self.spots, spots)
 
     def calc_flux(self):
         """Calculate the flux map."""
@@ -105,6 +114,22 @@ class Star:
         self.calc_flux()
         self.limb_darken()
         self.inc = new_inclination
+
+
+class Star(Body):
+    """A Star."""
+
+    def __init__(self, *args, **kwargs):
+        """Initialize a Star."""
+        super().__init__(*args, **kwargs)
+        self.spots = np.array([])
+
+    def add(self, spots, overwrite=False):
+        """Add a feature."""
+        if overwrite:
+            self.spots = spots
+        else:
+            self.spots = np.append(self.spots, spots)
 
 
 class Spot:
