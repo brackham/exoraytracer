@@ -200,9 +200,7 @@ class Scene:
                 t_min = t
                 P = ray.origin + ray.u*t
                 N = normalize(P-body.center)
-                mu = (np.dot(ray.origin-P, P-body.center) /
-                      (np.linalg.norm(ray.origin-P) *
-                       np.linalg.norm(P-body.center)))
+                mu = np.abs(np.cos(angle_between(ray.u, N)))
 
                 # The standard transformation places the observer at x=+inf
                 # r, theta, phi = cart2sph(*N)
@@ -283,10 +281,9 @@ class Scene:
         plt.show()
 
 
-def normalize(x):
+def normalize(vector):
     """Normalize a vector."""
-    x /= np.linalg.norm(x)
-    return x
+    return vector / np.linalg.norm(vector)
 
 
 def intersect(Ray, Star):
@@ -311,12 +308,11 @@ def intersect(Ray, Star):
     return np.inf
 
 
-def angle_between(v0, v1):
-    """Determine the angle between two vectors."""
-    v0 = normalize(v0)
-    v1 = normalize(v1)
-    theta = np.arccos(np.dot(v0, v1))
-    return theta
+def angle_between(v1, v2):
+    """Get the angle in radians between two vectors."""
+    v1_u = normalize(v1)
+    v2_u = normalize(v2)
+    return np.arccos(np.clip(np.dot(v1_u, v2_u), -1.0, 1.0))
 
 
 def get_Euler_angles(u, theta):
