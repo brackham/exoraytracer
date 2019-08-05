@@ -207,24 +207,26 @@ class Scene:
                 N = normalize(P-body.center)
                 mu = np.abs(np.cos(angle_between(ray.u, N)))
 
-                # The standard transformation places the observer at x=+inf
-                # r, theta, phi = cart2sph(*N)
-                # Instead, let's place the observer at z=+inf
-                r, theta, phi = cart2sph(N[2], N[0], N[1])
-                lat = np.degrees(theta)
-                lon = np.degrees(phi)
-
                 self.body[j, i] = body
                 self.t[j, i] = t
                 self.P[j, i] = P
                 self.N[j, i] = N
                 self.mu[j, i] = mu
-                self.r[j, i] = r
-                self.theta[j, i] = theta
-                self.phi[j, i] = phi
-                self.lat[j, i] = lat
-                self.lon[j, i] = lon
-                self.flux[j, i] = 1.
+
+        # The standard transformation places the observer at x=+inf
+        # r, theta, phi = cart2sph(*N)
+        # Instead, let's place the observer at z=+inf
+        r, theta, phi = cart2sph(self.N[:, :, 2],
+                                 self.N[:, :, 0],
+                                 self.N[:, :, 1])
+        lat = np.degrees(theta)
+        lon = np.degrees(phi)
+        self.r = r
+        self.theta = theta
+        self.phi = phi
+        self.lat = lat
+        self.lon = lon
+        self.flux = 1.
 
     def show(self, array='flux', body=None):
         """Show a property of the Scene."""
