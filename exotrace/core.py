@@ -19,7 +19,8 @@ class Ray:
 class Body:
     """Base class for bodies in the system."""
 
-    def __init__(self, center, radius, axis=np.array([0., 1., 0.])):
+    def __init__(self, center, radius, axis=np.array([0., 1., 0.]),
+                 inc=90., meridian=0.):
         """
         Initialize a Body.
 
@@ -31,6 +32,10 @@ class Body:
             The body radius.
         axis : array-like
             The axis of rotation.
+        inc : float
+            The inclination in degrees.
+        meridian : float
+            The meridian in degrees.
 
         Returns
         -------
@@ -40,8 +45,8 @@ class Body:
         self.center = center
         self.radius = radius
         self.axis = normalize(axis)
-        self.inc = 90.
-        self.meridian = 0.
+        self.inc = inc
+        self.meridian = meridian
         self.u1 = 0.
         self.u2 = 0.
 
