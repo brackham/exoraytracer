@@ -1,7 +1,7 @@
 """`exotrace` core functionality."""
 import matplotlib.pyplot as plt
 import numpy as np
-
+from astropy.coordinates.matrix_utilities import rotation_matrix
 
 # __all__ = ['Ray', 'Star', 'Spot', 'Scene', 'intersect']
 
@@ -213,12 +213,26 @@ class Scene:
                 self.N[j, i] = N
                 self.mu[j, i] = mu
 
+        # Set the inclinations of the bodies.
+        for body in self.bodies:
+            rot_N = self.N @ rotation_matrix(body.inc, axis='x')
+            mask2d, mask3d = self.get_masks(body)
+            self.N[~mask3d] = rot_N[~mask3d]
+
+        # Set the meridians of the bodies.
+        for body in self.bodies:
+            rot_N = self.N @ rotation_matrix(90.+body.meridian, axis='z')
+            mask2d, mask3d = self.get_masks(body)
+            self.N[~mask3d] = rot_N[~mask3d]
+
         # The standard transformation places the observer at x=+inf
-        # r, theta, phi = cart2sph(*N)
+        r, theta, phi = cart2sph(self.N[:, :, 0],
+                                 self.N[:, :, 1],
+                                 self.N[:, :, 2])
         # Instead, let's place the observer at z=+inf
-        r, theta, phi = cart2sph(self.N[:, :, 2],
-                                 self.N[:, :, 0],
-                                 self.N[:, :, 1])
+#         r, theta, phi = cart2sph(self.N[:, :, 2],
+#                                  self.N[:, :, 0],
+#                                  self.N[:, :, 1])
         lat = np.degrees(theta)
         lon = np.degrees(phi)
         self.r = r
@@ -226,7 +240,16 @@ class Scene:
         self.phi = phi
         self.lat = lat
         self.lon = lon
-        self.flux = 1.
+        self.flux = np.ones(self.shape)
+
+    def get_masks(self, body):
+        """Get 2D and 3D masks for Body."""
+        mask2d = np.ma.masked_where(self.body != body, self.body).mask
+        mask3d = np.broadcast_to(np.expand_dims(mask2d, axis=2), self.N.shape)
+        return mask2d, mask3d
+
+    def set_inclination(self):
+        pass
 
     def show(self, array='flux', body=None):
         """Show a property of the Scene."""
