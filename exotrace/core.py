@@ -1,7 +1,7 @@
 """`exotrace` core functionality."""
 import matplotlib.pyplot as plt
 import numpy as np
-
+from astropy.coordinates.matrix_utilities import rotation_matrix
 
 # __all__ = ['Ray', 'Star', 'Spot', 'Scene', 'intersect']
 
@@ -19,7 +19,8 @@ class Ray:
 class Body:
     """Base class for bodies in the system."""
 
-    def __init__(self, center, radius, axis=np.array([0., 1., 0.])):
+    def __init__(self, center, radius, axis=np.array([0., 1., 0.]),
+                 inc=90., meridian=0.):
         """
         Initialize a Body.
 
@@ -31,6 +32,10 @@ class Body:
             The body radius.
         axis : array-like
             The axis of rotation.
+        inc : float
+            The inclination in degrees.
+        meridian : float
+            The meridian in degrees.
 
         Returns
         -------
@@ -40,8 +45,8 @@ class Body:
         self.center = center
         self.radius = radius
         self.axis = normalize(axis)
-        self.inc = 90.
-        self.meridian = 0.
+        self.inc = inc
+        self.meridian = meridian
         self.u1 = 0.
         self.u2 = 0.
 
@@ -200,39 +205,60 @@ class Scene:
                 t_min = t
                 P = ray.origin + ray.u*t
                 N = normalize(P-body.center)
-                mu = (np.dot(ray.origin-P, P-body.center) /
-                      (np.linalg.norm(ray.origin-P) *
-                       np.linalg.norm(P-body.center)))
-
-                # The standard transformation places the observer at x=+inf
-                # r, theta, phi = cart2sph(*N)
-                # Instead, let's place the observer at z=+inf
-                r, theta, phi = cart2sph(N[2], N[0], N[1])
-                lat = np.degrees(theta)
-                lon = np.degrees(phi)
+                mu = np.abs(np.cos(angle_between(ray.u, N)))
 
                 self.body[j, i] = body
                 self.t[j, i] = t
                 self.P[j, i] = P
                 self.N[j, i] = N
                 self.mu[j, i] = mu
-                self.r[j, i] = r
-                self.theta[j, i] = theta
-                self.phi[j, i] = phi
-                self.lat[j, i] = lat
-                self.lon[j, i] = lon
-                self.flux[j, i] = 1.
 
-    def show(self, array='flux'):
+        # Set the inclinations of the bodies.
+        for body in self.bodies:
+            rot_N = self.N @ rotation_matrix(body.inc, axis='x')
+            mask2d, mask3d = self.get_masks(body)
+            self.N[~mask3d] = rot_N[~mask3d]
+
+        # Set the meridians of the bodies.
+        for body in self.bodies:
+            rot_N = self.N @ rotation_matrix(90.+body.meridian, axis='z')
+            mask2d, mask3d = self.get_masks(body)
+            self.N[~mask3d] = rot_N[~mask3d]
+
+        # The standard transformation places the observer at x=+inf
+        r, theta, phi = cart2sph(self.N[:, :, 0],
+                                 self.N[:, :, 1],
+                                 self.N[:, :, 2])
+        # Instead, let's place the observer at z=+inf
+#         r, theta, phi = cart2sph(self.N[:, :, 2],
+#                                  self.N[:, :, 0],
+#                                  self.N[:, :, 1])
+        lat = np.degrees(theta)
+        lon = np.degrees(phi)
+        self.r = r
+        self.theta = theta
+        self.phi = phi
+        self.lat = lat
+        self.lon = lon
+        self.flux = np.ones(self.shape)
+
+    def get_masks(self, body):
+        """Get 2D and 3D masks for Body."""
+        mask2d = np.ma.masked_where(self.body != body, self.body).mask
+        mask3d = np.broadcast_to(np.expand_dims(mask2d, axis=2), self.N.shape)
+        return mask2d, mask3d
+
+    def set_inclination(self):
+        pass
+
+    def show(self, array='flux', body=None):
         """Show a property of the Scene."""
         arrays = {'flux': self.flux,
                   'mu': self.mu,
                   't': self.t,
-                  'P': self.P,
                   'P[0]': self.P[:, :, 0],
                   'P[1]': self.P[:, :, 1],
                   'P[2]': self.P[:, :, 2],
-                  'N': self.N,
                   'N[0]': self.N[:, :, 0],
                   'N[1]': self.N[:, :, 1],
                   'N[2]': self.N[:, :, 2],
@@ -244,22 +270,50 @@ class Scene:
 
         cmaps = {'flux': 'viridis',
                  'mu': 'viridis',
-                 't': 'viridis'}
+                 't': 'viridis',
+                 'N[0]': 'RdBu',
+                 'N[1]': 'RdBu',
+                 'N[2]': 'RdBu',
+                 'theta': 'RdBu',
+                 'phi': 'RdBu',
+                 'lat': 'RdBu',
+                 'lon': 'RdBu'}
+
+        vmins = {'N[0]': -1,
+                 'N[1]': -1,
+                 'N[2]': -1,
+                 'theta': -np.pi/2.,
+                 'phi': -np.pi,
+                 'lat': -90,
+                 'lon': -180}
+
+        vmaxs = {'N[0]': 1,
+                 'N[1]': 1,
+                 'N[2]': 1,
+                 'theta': np.pi/2.,
+                 'phi': np.pi,
+                 'lat': 90,
+                 'lon': 180}
 
         values = arrays[array]
+        if body is None:
+            ma = np.ma.masked_invalid(values)
+        else:
+            ma = np.ma.masked_where(self.body != body, values)
         cmap = cmaps.get(array, 'viridis')
+        vmin = vmins.get(array, ma.min())
+        vmax = vmaxs.get(array, ma.max())
         fig, ax = plt.subplots()
-        im = ax.imshow(values, origin='lower', cmap=cmap)
+        im = ax.imshow(ma, origin='lower', cmap=cmap, vmin=vmin, vmax=vmax)
         ax.set_xlabel('x (pixel)')
         ax.set_ylabel('y (pixel)')
         plt.colorbar(im, label=array)
         plt.show()
 
 
-def normalize(x):
+def normalize(vector):
     """Normalize a vector."""
-    x /= np.linalg.norm(x)
-    return x
+    return vector / np.linalg.norm(vector)
 
 
 def intersect(Ray, Star):
@@ -284,12 +338,11 @@ def intersect(Ray, Star):
     return np.inf
 
 
-def angle_between(v0, v1):
-    """Determine the angle between two vectors."""
-    v0 = normalize(v0)
-    v1 = normalize(v1)
-    theta = np.arccos(np.dot(v0, v1))
-    return theta
+def angle_between(v1, v2):
+    """Get the angle in radians between two vectors."""
+    v1_u = normalize(v1)
+    v2_u = normalize(v2)
+    return np.arccos(np.clip(np.dot(v1_u, v2_u), -1.0, 1.0))
 
 
 def get_Euler_angles(u, theta):
