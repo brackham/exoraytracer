@@ -50,25 +50,6 @@ class Body:
         self.u1 = 0.
         self.u2 = 0.
 
-        # Probably need to get rid of all these
-        res = 100
-        self.res = res
-        self.shape = (res, res)
-        self.x = np.linspace(-radius, radius, res)
-        self.y = np.linspace(-radius, radius, res)
-        self.P = np.zeros((res, res, 3))
-        self.N = np.zeros((res, res, 3))
-        self.mu = np.zeros((res, res))
-        self.r1 = np.zeros((res, res))
-        self.theta1 = np.zeros((res, res))
-        self.phi1 = np.zeros((res, res))
-        self.r = np.zeros((res, res))
-        self.theta = np.zeros((res, res))
-        self.phi = np.zeros((res, res))
-        self.lat = np.zeros((res, res))
-        self.lon = np.zeros((res, res))
-        self.flux = np.zeros((res, res))
-
     def calc_flux(self):
         """Calculate the flux map."""
         self.flux = np.ones((self.res, self.res))
@@ -247,9 +228,6 @@ class Scene:
         mask2d = np.ma.masked_where(self.body != body, self.body).mask
         mask3d = np.broadcast_to(np.expand_dims(mask2d, axis=2), self.N.shape)
         return mask2d, mask3d
-
-    def set_inclination(self):
-        pass
 
     def show(self, array='flux', body=None):
         """Show a property of the Scene."""
