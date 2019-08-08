@@ -47,7 +47,7 @@ class Body:
         self.axis = normalize(axis)
         self.inc = inc
         self.meridian = meridian
-        self.intensity = 1.
+        self.intensity = intensity
         self.u1 = 0.
         self.u2 = 0.
 
@@ -238,7 +238,8 @@ class Scene:
                  'theta': -np.pi/2.,
                  'phi': -np.pi,
                  'lat': -90,
-                 'lon': -180}
+                 'lon': -180,
+                 'flux': 0.}
 
         vmaxs = {'N[0]': 1,
                  'N[1]': 1,
