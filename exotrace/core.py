@@ -50,21 +50,6 @@ class Body:
         self.u1 = 0.
         self.u2 = 0.
 
-    def calc_flux(self):
-        """Calculate the flux map."""
-        self.flux = np.ones((self.res, self.res))
-        self.flux = np.ma.masked_where(np.isnan(self.r), self.flux)
-        for spot in self.spots:
-            dist = haversine(self.lat, self.lon, spot.lat, spot.lon)
-            spotted = np.ma.masked_where(dist <= spot.radius, dist)
-            self.flux[spotted.mask] = spot.contrast
-
-    def limb_darken(self):
-        """Apply the quadratic limb darkening law."""
-        self.flux = (self.flux -
-                     self.u1*(self.flux - self.mu) -
-                     self.u2*(self.flux - self.mu)**2)
-
     def rotate(self, angle):
         """Rotate about axis by a given angle in degrees."""
         self.meridian = (self.meridian + angle) % 360.
@@ -198,6 +183,21 @@ class Scene:
         mask2d = np.ma.masked_where(self.body != body, self.body).mask
         mask3d = np.broadcast_to(np.expand_dims(mask2d, axis=2), self.N.shape)
         return mask2d, mask3d
+
+#     def calc_flux(self):
+#         """Calculate the flux map."""
+#         self.flux = np.ones((self.res, self.res))
+#         self.flux = np.ma.masked_where(np.isnan(self.r), self.flux)
+#         for spot in self.spots:
+#             dist = haversine(self.lat, self.lon, spot.lat, spot.lon)
+#             spotted = np.ma.masked_where(dist <= spot.radius, dist)
+#             self.flux[spotted.mask] = spot.contrast
+
+#     def limb_darken(self):
+#         """Apply the quadratic limb darkening law."""
+#         self.flux = (self.flux -
+#                      self.u1*(self.flux - self.mu) -
+#                      self.u2*(self.flux - self.mu)**2)
 
     def show(self, array='flux', body=None):
         """Show a property of the Scene."""
