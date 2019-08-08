@@ -154,10 +154,10 @@ class Scene:
             mask2d, mask3d = self.get_masks(body)
             # Set the inclinations of the bodies.
             rot_N = self.N @ rotation_matrix(body.inc, axis='x')
-            self.N[~mask3d] = rot_N[~mask3d]
+            self.N[mask3d] = rot_N[mask3d]
             # Set the meridians of the bodies.
             rot_N = self.N @ rotation_matrix(90.+body.meridian, axis='z')
-            self.N[~mask3d] = rot_N[~mask3d]
+            self.N[mask3d] = rot_N[mask3d]
 
         # The standard transformation places the observer at x=+inf
         r, theta, phi = cart2sph(self.N[:, :, 0],
@@ -178,23 +178,23 @@ class Scene:
         # Calculate the flux
         for body in self.bodies:
             mask2d, mask3d = self.get_masks(body)
-            self.flux[~mask2d] = body.intensity
+            self.flux[mask2d] = body.intensity
             self.limb_darken(body)
 
     def get_masks(self, body):
         """Get 2D and 3D masks for Body."""
-        mask2d = np.ma.masked_where(self.body != body, self.body).mask
+        mask2d = np.ma.masked_where(self.body == body, self.body).mask
         mask3d = np.broadcast_to(np.expand_dims(mask2d, axis=2), self.N.shape)
         return mask2d, mask3d
 
     def limb_darken(self, body):
         """Apply the quadratic limb darkening law."""
         mask2d, mask3d = self.get_masks(body)
-        m_flux = self.flux[~mask2d]
-        m_mu = self.mu[~mask2d]
-        self.flux[~mask2d] = (m_flux -
-                              body.u1*(m_flux - m_mu) -
-                              body.u2*(m_flux - m_mu)**2)
+        m_flux = self.flux[mask2d]
+        m_mu = self.mu[mask2d]
+        self.flux[mask2d] = (m_flux -
+                             body.u1*(m_flux - m_mu) -
+                             body.u2*(m_flux - m_mu)**2)
 
 #     def calc_flux(self):
 #         """Calculate the flux map."""
