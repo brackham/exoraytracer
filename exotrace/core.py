@@ -150,16 +150,13 @@ class Scene:
                 self.N[j, i] = N
                 self.mu[j, i] = mu
 
-        # Set the inclinations of the bodies.
         for body in self.bodies:
+            mask2d, mask3d = self.get_masks(body)
+            # Set the inclinations of the bodies.
             rot_N = self.N @ rotation_matrix(body.inc, axis='x')
-            mask2d, mask3d = self.get_masks(body)
             self.N[~mask3d] = rot_N[~mask3d]
-
-        # Set the meridians of the bodies.
-        for body in self.bodies:
+            # Set the meridians of the bodies.
             rot_N = self.N @ rotation_matrix(90.+body.meridian, axis='z')
-            mask2d, mask3d = self.get_masks(body)
             self.N[~mask3d] = rot_N[~mask3d]
 
         # The standard transformation places the observer at x=+inf
