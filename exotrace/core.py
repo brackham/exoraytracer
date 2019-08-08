@@ -20,7 +20,7 @@ class Body:
     """Base class for bodies in the system."""
 
     def __init__(self, center, radius, axis=np.array([0., 1., 0.]),
-                 inc=90., meridian=0.):
+                 inc=90., meridian=0., intensity=1., u1=0., u2=0.):
         """
         Initialize a Body.
 
@@ -47,78 +47,15 @@ class Body:
         self.axis = normalize(axis)
         self.inc = inc
         self.meridian = meridian
-        self.u1 = 0.
-        self.u2 = 0.
-
-        # Probably need to get rid of all these
-        res = 100
-        self.res = res
-        self.shape = (res, res)
-        self.x = np.linspace(-radius, radius, res)
-        self.y = np.linspace(-radius, radius, res)
-        self.P = np.zeros((res, res, 3))
-        self.N = np.zeros((res, res, 3))
-        self.mu = np.zeros((res, res))
-        self.r1 = np.zeros((res, res))
-        self.theta1 = np.zeros((res, res))
-        self.phi1 = np.zeros((res, res))
-        self.r = np.zeros((res, res))
-        self.theta = np.zeros((res, res))
-        self.phi = np.zeros((res, res))
-        self.lat = np.zeros((res, res))
-        self.lon = np.zeros((res, res))
-        self.flux = np.zeros((res, res))
-
-    def calc_flux(self):
-        """Calculate the flux map."""
-        self.flux = np.ones((self.res, self.res))
-        self.flux = np.ma.masked_where(np.isnan(self.r), self.flux)
-        for spot in self.spots:
-            dist = haversine(self.lat, self.lon, spot.lat, spot.lon)
-            spotted = np.ma.masked_where(dist <= spot.radius, dist)
-            self.flux[spotted.mask] = spot.contrast
-
-    def limb_darken(self):
-        """Apply the quadratic limb darkening law."""
-        self.flux = (self.flux -
-                     self.u1*(self.flux - self.mu) -
-                     self.u2*(self.flux - self.mu)**2)
+        self.intensity = intensity
+        self.u1 = u1
+        self.u2 = u2
 
     def rotate(self, angle):
         """Rotate about axis by a given angle in degrees."""
         self.meridian = (self.meridian + angle) % 360.
         if self.meridian > 180.:
             self.meridian -= 360.
-        for j, i in np.ndindex(self.shape):
-            self.P[j, i, :] = rotate_basis(self.P[j, i, :],
-                                           gamma=np.radians(-angle))
-        self.r = np.sqrt(np.sum(self.P**2, axis=2))
-        self.theta = np.arccos(self.P[:, :, 2]/self.r)
-        self.phi = np.arctan2(self.P[:, :, 0], self.P[:, :, 1])
-        self.lat = np.degrees(self.theta-np.pi/2.)
-        self.lon = np.degrees(self.phi)
-        self.calc_flux()
-        self.limb_darken()
-
-    def set_meridian(self, new_meridian):
-        """Set the meridian to a specified longitude in degrees."""
-        angle = new_meridian-self.meridian
-        self.rotate(angle)
-
-    def set_inclination(self, new_inclination):
-        """Set the inclination to a specified degree value."""
-        angle = new_inclination - self.inc
-        for j, i in np.ndindex(self.shape):
-            self.P[j, i, :] = rotate_basis(self.P[j, i, :],
-                                           alpha=np.radians(-angle))
-        self.r = np.sqrt(np.sum(self.P**2, axis=2))
-        self.theta = np.arccos(self.P[:, :, 2]/self.r)
-        self.phi = np.arctan2(self.P[:, :, 0], self.P[:, :, 1])
-        self.lat = np.degrees(self.theta-np.pi/2.)
-        self.lon = np.degrees(self.phi)
-        self.calc_flux()
-        self.limb_darken()
-        self.inc = new_inclination
 
 
 class Star(Body):
@@ -213,16 +150,13 @@ class Scene:
                 self.N[j, i] = N
                 self.mu[j, i] = mu
 
-        # Set the inclinations of the bodies.
         for body in self.bodies:
+            mask2d, mask3d = self.get_masks(body)
+            # Set the inclinations of the bodies.
             rot_N = self.N @ rotation_matrix(body.inc, axis='x')
-            mask2d, mask3d = self.get_masks(body)
             self.N[~mask3d] = rot_N[~mask3d]
-
-        # Set the meridians of the bodies.
-        for body in self.bodies:
+            # Set the meridians of the bodies.
             rot_N = self.N @ rotation_matrix(90.+body.meridian, axis='z')
-            mask2d, mask3d = self.get_masks(body)
             self.N[~mask3d] = rot_N[~mask3d]
 
         # The standard transformation places the observer at x=+inf
@@ -240,7 +174,12 @@ class Scene:
         self.phi = phi
         self.lat = lat
         self.lon = lon
-        self.flux = np.ones(self.shape)
+
+        # Calculate the flux
+        for body in self.bodies:
+            mask2d, mask3d = self.get_masks(body)
+            self.flux[~mask2d] = body.intensity
+            self.limb_darken(body)
 
     def get_masks(self, body):
         """Get 2D and 3D masks for Body."""
@@ -248,8 +187,23 @@ class Scene:
         mask3d = np.broadcast_to(np.expand_dims(mask2d, axis=2), self.N.shape)
         return mask2d, mask3d
 
-    def set_inclination(self):
-        pass
+    def limb_darken(self, body):
+        """Apply the quadratic limb darkening law."""
+        mask2d, mask3d = self.get_masks(body)
+        m_flux = self.flux[~mask2d]
+        m_mu = self.mu[~mask2d]
+        self.flux[~mask2d] = (m_flux -
+                              body.u1*(m_flux - m_mu) -
+                              body.u2*(m_flux - m_mu)**2)
+
+#     def calc_flux(self):
+#         """Calculate the flux map."""
+#         self.flux = np.ones((self.res, self.res))
+#         self.flux = np.ma.masked_where(np.isnan(self.r), self.flux)
+#         for spot in self.spots:
+#             dist = haversine(self.lat, self.lon, spot.lat, spot.lon)
+#             spotted = np.ma.masked_where(dist <= spot.radius, dist)
+#             self.flux[spotted.mask] = spot.contrast
 
     def show(self, array='flux', body=None):
         """Show a property of the Scene."""
@@ -285,7 +239,8 @@ class Scene:
                  'theta': -np.pi/2.,
                  'phi': -np.pi,
                  'lat': -90,
-                 'lon': -180}
+                 'lon': -180,
+                 'flux': 0.}
 
         vmaxs = {'N[0]': 1,
                  'N[1]': 1,
