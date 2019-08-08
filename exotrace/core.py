@@ -20,7 +20,7 @@ class Body:
     """Base class for bodies in the system."""
 
     def __init__(self, center, radius, axis=np.array([0., 1., 0.]),
-                 inc=90., meridian=0., intensity=1.):
+                 inc=90., meridian=0., intensity=1., u1=0., u2=0.):
         """
         Initialize a Body.
 
@@ -48,8 +48,8 @@ class Body:
         self.inc = inc
         self.meridian = meridian
         self.intensity = intensity
-        self.u1 = 0.
-        self.u2 = 0.
+        self.u1 = u1
+        self.u2 = u2
 
     def rotate(self, angle):
         """Rotate about axis by a given angle in degrees."""
@@ -179,12 +179,22 @@ class Scene:
         for body in self.bodies:
             mask2d, mask3d = self.get_masks(body)
             self.flux[~mask2d] = body.intensity
+            self.limb_darken(body)
 
     def get_masks(self, body):
         """Get 2D and 3D masks for Body."""
         mask2d = np.ma.masked_where(self.body != body, self.body).mask
         mask3d = np.broadcast_to(np.expand_dims(mask2d, axis=2), self.N.shape)
         return mask2d, mask3d
+
+    def limb_darken(self, body):
+        """Apply the quadratic limb darkening law."""
+        mask2d, mask3d = self.get_masks(body)
+        m_flux = self.flux[~mask2d]
+        m_mu = self.mu[~mask2d]
+        self.flux[~mask2d] = (m_flux -
+                              body.u1*(m_flux - m_mu) -
+                              body.u2*(m_flux - m_mu)**2)
 
 #     def calc_flux(self):
 #         """Calculate the flux map."""
@@ -194,12 +204,6 @@ class Scene:
 #             dist = haversine(self.lat, self.lon, spot.lat, spot.lon)
 #             spotted = np.ma.masked_where(dist <= spot.radius, dist)
 #             self.flux[spotted.mask] = spot.contrast
-
-#     def limb_darken(self):
-#         """Apply the quadratic limb darkening law."""
-#         self.flux = (self.flux -
-#                      self.u1*(self.flux - self.mu) -
-#                      self.u2*(self.flux - self.mu)**2)
 
     def show(self, array='flux', body=None):
         """Show a property of the Scene."""
