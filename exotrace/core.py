@@ -20,7 +20,7 @@ class Body:
     """Base class for bodies in the system."""
 
     def __init__(self, center, radius, axis=np.array([0., 1., 0.]),
-                 inc=90., meridian=0.):
+                 inc=90., meridian=0., intensity=1.):
         """
         Initialize a Body.
 
@@ -47,6 +47,7 @@ class Body:
         self.axis = normalize(axis)
         self.inc = inc
         self.meridian = meridian
+        self.intensity = 1.
         self.u1 = 0.
         self.u2 = 0.
 
@@ -176,7 +177,11 @@ class Scene:
         self.phi = phi
         self.lat = lat
         self.lon = lon
-        self.flux = np.ones(self.shape)
+
+        # Calculate the flux
+        for body in self.bodies:
+            mask2d, mask3d = self.get_masks(body)
+            self.flux[~mask2d] = body.intensity
 
     def get_masks(self, body):
         """Get 2D and 3D masks for Body."""
