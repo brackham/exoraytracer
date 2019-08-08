@@ -70,36 +70,6 @@ class Body:
         self.meridian = (self.meridian + angle) % 360.
         if self.meridian > 180.:
             self.meridian -= 360.
-        for j, i in np.ndindex(self.shape):
-            self.P[j, i, :] = rotate_basis(self.P[j, i, :],
-                                           gamma=np.radians(-angle))
-        self.r = np.sqrt(np.sum(self.P**2, axis=2))
-        self.theta = np.arccos(self.P[:, :, 2]/self.r)
-        self.phi = np.arctan2(self.P[:, :, 0], self.P[:, :, 1])
-        self.lat = np.degrees(self.theta-np.pi/2.)
-        self.lon = np.degrees(self.phi)
-        self.calc_flux()
-        self.limb_darken()
-
-    def set_meridian(self, new_meridian):
-        """Set the meridian to a specified longitude in degrees."""
-        angle = new_meridian-self.meridian
-        self.rotate(angle)
-
-    def set_inclination(self, new_inclination):
-        """Set the inclination to a specified degree value."""
-        angle = new_inclination - self.inc
-        for j, i in np.ndindex(self.shape):
-            self.P[j, i, :] = rotate_basis(self.P[j, i, :],
-                                           alpha=np.radians(-angle))
-        self.r = np.sqrt(np.sum(self.P**2, axis=2))
-        self.theta = np.arccos(self.P[:, :, 2]/self.r)
-        self.phi = np.arctan2(self.P[:, :, 0], self.P[:, :, 1])
-        self.lat = np.degrees(self.theta-np.pi/2.)
-        self.lon = np.degrees(self.phi)
-        self.calc_flux()
-        self.limb_darken()
-        self.inc = new_inclination
 
 
 class Star(Body):
