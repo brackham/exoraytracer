@@ -179,6 +179,12 @@ class Scene:
         for body in self.bodies:
             mask2d, mask3d = self.get_masks(body)
             self.flux[mask2d] = body.intensity
+            for spot in body.spots:
+                dist = haversine(self.lat, self.lon,
+                                 spot.lat, spot.lon)
+                dist = np.ma.masked_array(dist, mask=~mask2d)
+                spotted = ~np.ma.masked_where(dist >= spot.radius, dist).mask
+                self.flux[spotted] *= spot.contrast
             self.limb_darken(body)
 
     def get_masks(self, body):
