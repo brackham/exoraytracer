@@ -77,12 +77,12 @@ class Star(Body):
 class Spot:
     """A Spot."""
 
-    def __init__(self, lat, lon, radius, contrast):
+    def __init__(self, lat, lon, radius, flux):
         """Initialize a Spot."""
         self.lat = np.float(lat)
         self.lon = np.float(lon)
         self.radius = np.float(radius)
-        self.contrast = np.float(contrast)
+        self.flux = np.float(flux)
 
 
 class Scene:
@@ -184,7 +184,7 @@ class Scene:
                                  spot.lat, spot.lon)
                 dist = np.ma.masked_array(dist, mask=~mask2d)
                 spotted = ~np.ma.masked_where(dist >= spot.radius, dist).mask
-                self.flux[spotted] *= spot.contrast
+                self.flux[spotted] = spot.flux
             self.limb_darken(body)
 
     def get_masks(self, body):
@@ -201,15 +201,6 @@ class Scene:
         self.flux[mask2d] = (m_flux -
                              body.u1*(m_flux - m_mu) -
                              body.u2*(m_flux - m_mu)**2)
-
-#     def calc_flux(self):
-#         """Calculate the flux map."""
-#         self.flux = np.ones((self.res, self.res))
-#         self.flux = np.ma.masked_where(np.isnan(self.r), self.flux)
-#         for spot in self.spots:
-#             dist = haversine(self.lat, self.lon, spot.lat, spot.lon)
-#             spotted = np.ma.masked_where(dist <= spot.radius, dist)
-#             self.flux[spotted.mask] = spot.contrast
 
     def show(self, array='flux', body=None):
         """Show a property of the Scene."""
