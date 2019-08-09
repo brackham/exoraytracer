@@ -178,13 +178,19 @@ class Scene:
         # Calculate the flux
         for body in self.bodies:
             mask2d, mask3d = self.get_masks(body)
+            # Set the baseline flux
             self.flux[mask2d] = body.intensity
+            # Only consider single body for dist calculations
+            lat = np.ma.masked_array(self.lat, mask=~mask2d)
+            lon = np.ma.masked_array(self.lon, mask=~mask2d)
             for spot in body.spots:
-                dist = haversine(self.lat, self.lon,
-                                 spot.lat, spot.lon)
-                dist = np.ma.masked_array(dist, mask=~mask2d)
+                # Calculate distance from spot center (ignoring errors)
+                with np.errstate(invalid='ignore'):
+                    dist = haversine(lat, lon, spot.lat, spot.lon)
                 spotted = ~np.ma.masked_where(dist >= spot.radius, dist).mask
+                # Set flux inside spot
                 self.flux[spotted] = spot.flux
+            # Limb-darken the entire disk
             self.limb_darken(body)
 
     def get_masks(self, body):
